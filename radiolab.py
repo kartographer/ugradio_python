@@ -590,7 +590,7 @@ def recordDVM(filename='voltdata.npz',sun=False,moon=False,recordLength=np.inf,v
         currLST = getLST()
         currJulDay = getJulDay()
         raArr = np.append(raArr,ra)
-        decArr = np.append(decArr,ra)
+        decArr = np.append(decArr,dec)
         voltArr = np.append(voltArr,currVolt)
         lstArr = np.append(lstArr,currLST)
         jdArr = np.append(jdArr,currJulDay)
