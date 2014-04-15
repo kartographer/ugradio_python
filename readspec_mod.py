@@ -42,7 +42,7 @@ def readSpec(binaryFile, header = False, fits = False, binn = False):
     # read in binary file, and then trim it down so only complete spectra
     # remain in the data file that the rest of the program will work with
     #rawData = read_binary(binaryFile)
-    rawData = np.fromfile(binaryFile,dtype='>u1')
+    rawData = np.fromfile(binaryFile,dtype='u1')
     trunData = removePartial(rawData)#, header = None, badSpec = None)
 
     # set defaults
@@ -71,21 +71,17 @@ def readSpec(binaryFile, header = False, fits = False, binn = False):
     byteInds4 = byteInds1 + 3
 
     # convert byte values into long integers
-    b1 = np.array([trunData[i] for i in byteInds1])
-    b2 = np.array([trunData[i] for i in byteInds2])
-    b3 = np.array([trunData[i] for i in byteInds3])
-    b4 = np.array([trunData[i] for i in byteInds4])
-    bytes1 = b1 * long(2. ** 24)
-    bytes2 = b2 * long(2. ** 16)
-    bytes3 = b3 * long(2. ** 8)
-    bytes4 = b4
-
+    bytes1 = np.array(trunData[byteInds1])* long(2. ** 24)
+    bytes2 = np.array(trunData[byteInds2])* long(2. ** 16)
+    bytes3 = np.array(trunData[byteInds3])* long(2. ** 8)
+    bytes4 = np.array(trunData[byteInds4])
     # calculate the actual values for each channel, and then reform
     # so that each spectrum is separate
     vals = np.array(bytes1 + bytes2 + bytes3 + bytes4)
 
     np.savez('file.npz', b1 = bytes1, b2 = bytes2, b3 = bytes3, b4 = bytes4, v = vals)
-    outData = vals.reshape((numChan, numSpec))
+    outData = np.reshape(np.transpose(vals),[numChan,numSpec],order='F')
+
     # set first and last channels to the neighbor value
     outData[0,:] = outData[1, :]
     outData[numChan - 1, :] = outData[numChan - 2, :]
@@ -98,22 +94,6 @@ def readSpec(binaryFile, header = False, fits = False, binn = False):
         np.savetxt(binName, float(outData))
 
     return outData
-
-
-
-def setDifference(a, b):
-    # = a and (not b) = elements in A but not in B
-
-    mina = np.min(a) ; maxa = np.max(a)
-    minb = np.min(b) ; maxb = np.max(b)
-    if (minb > maxa) or (maxb < mina): return a #No intersection...
-    r = np.where((np.histogram(a, range = (mina, maxa)) != 0) and
-             (np.histogram(b, range = (mina, maxa)) == 0))
-    if len(r[0]) == 0: 
-        return -1 
-    else: 
-        return r[0] + mina
-
 
 def arrdelete(init, at0=0, len0=0, count=0, 
               empty1=False, overwrite=False):
@@ -347,23 +327,6 @@ def removePartial(rawData, header = False, badSpec = False):
 
     return trunData
 
-
-def read_binary(binary_file):
-    '''
-    Emulates the read_binary function of IDL.
-
-    '''
-
-    import struct
-
-    f = open(binary_file, 'rb')
-    bytz = f.read()
-
-    #Decoding the byte array bytz
-    nints = 'i'*(len(bytz)/4)
-    vals = struct.unpack(nints,bytz)
-
-    return vals
 
 
     
